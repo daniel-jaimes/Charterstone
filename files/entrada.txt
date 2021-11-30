@@ -1,0 +1,25 @@
+#1 Azul 0 0 2
+#2 Rojo 0 2 0
+#3 Verde 2 0 0
+#4 Lila 0 1 1
+#5 Amarillo 1 1 0
+#6 Negro 1 0 1
+##
+L1 T 1 = M 3
+L2 M 1 = C 2
+L3 M 1 = T 2
+L4 X 1 = X 2
+L5 T 2 = C 5
+L6 C 2 = P 10
+L7 X 5 = P 10
+L8 T 5 = P 10
+L9 C 2 = X 5
+##
+S
+I
+M 1 2
+S
+M 1 6
+M 2 1
+R 1
+L

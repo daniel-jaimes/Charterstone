@@ -1,0 +1,21 @@
+ERROR: S --> << La acción requerida es incorreta >>
+INICIANDO PARTIDA
+ERROR: I --> << Numero de parámetros incorrecto >>
+ERROR: M 1 2 --> << Turno completado >>
+	Jugador [color=Azul, puntuacion=0, madera=1, carbon=2, trigo=0, monedas=0]
+	Jugador [color=Rojo, puntuacion=0, madera=0, carbon=0, trigo=2, monedas=0]
+	Jugador [color=Verde, puntuacion=0, madera=0, carbon=2, trigo=0, monedas=0]
+	Jugador [color=Lila, puntuacion=0, madera=1, carbon=0, trigo=1, monedas=0]
+	Jugador [color=Amarillo, puntuacion=0, madera=0, carbon=1, trigo=1, monedas=0]
+	Jugador [color=Negro, puntuacion=0, madera=1, carbon=1, trigo=0, monedas=0]
+ERROR: M 1 6 --> << El jugador no puede volver a jugar >>
+ERROR: M 2 1 --> << Turno completado >>
+	Localizacion [necesario=T, numNecesario=1, obtenido=M, numObtenido=3, jugador=Rojo]
+	Localizacion [necesario=M, numNecesario=1, obtenido=C, numObtenido=2, jugador=ninguno]
+	Localizacion [necesario=M, numNecesario=1, obtenido=T, numObtenido=2, jugador=ninguno]
+	Localizacion [necesario=X, numNecesario=1, obtenido=X, numObtenido=2, jugador=ninguno]
+	Localizacion [necesario=T, numNecesario=2, obtenido=C, numObtenido=5, jugador=ninguno]
+	Localizacion [necesario=C, numNecesario=2, obtenido=P, numObtenido=10, jugador=ninguno]
+	Localizacion [necesario=X, numNecesario=5, obtenido=P, numObtenido=10, jugador=ninguno]
+	Localizacion [necesario=T, numNecesario=5, obtenido=P, numObtenido=10, jugador=ninguno]
+	Localizacion [necesario=C, numNecesario=2, obtenido=X, numObtenido=5, jugador=ninguno]
