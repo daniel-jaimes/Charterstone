@@ -18,11 +18,16 @@ public class Controller {
     public void init(){
         try(BufferedReader BR = new BufferedReader(InputReader.getData())){
             String str;
-            while ((str = BR.readLine()) != null){
+            boolean exit = false;
+            while ((str = BR.readLine()) != null && !exit){
                 System.out.println(str);
+                exit = commands(str);
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
+    }
+    private boolean commands(String line){
+        return true;
     }
 }
