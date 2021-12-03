@@ -1,10 +1,22 @@
 package Dao;
 
-import java.io.FileReader;
+
+import java.io.BufferedReader;
+import java.io.IOException;
 
 public class InputReader {
-    public static FileReader getData(){
+    private BufferedReader inputReader;
+    public InputReader(){
         System.out.println("LEIENDO DATOS...");
-        return Reader.readerPath("files/entrada.txt");
+        inputReader = new BufferedReader(Reader.readerPath("files/entrada.txt"));
+    }
+    public String readLine(){
+        String str = "";
+        try {
+            str = inputReader.readLine();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        return str;
     }
 }
