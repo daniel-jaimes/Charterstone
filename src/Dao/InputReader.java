@@ -13,7 +13,8 @@ public class InputReader {
     public String readLine(){
         String str = "";
         try {
-            str = inputReader.readLine();
+            String aux;
+            if((aux = inputReader.readLine()) != null) str = aux;
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
