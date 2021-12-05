@@ -8,7 +8,8 @@ public class LogicException extends Exception{
     public static final int INCORRECT_PAREAMETERS = 1;
     public static final int LACK_MATERIALS = 2;
     public static final int PLAYER_DONT_REPEAT = 3;
-    public static final int COMPLETE_TURN = 4;
+    public static final int TWO_PLAYERS_USED = 4;
+    public static final int COMPLETE_TURN = 5;
     private final String errorLine;
     private int value;
     private List<String> message = Arrays.asList(

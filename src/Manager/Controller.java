@@ -1,6 +1,8 @@
 package Manager;
 
 import Dao.InputReader;
+import Dao.OutputWriter;
+import Exceptions.ExecutionException;
 import Exceptions.LogicException;
 import Model.Location;
 import Model.Player;
@@ -9,8 +11,8 @@ import java.util.ArrayList;
 
 public class Controller {
     private static Controller controller;
-    private Game game;
-    private int numPrevPlayer;
+    private boolean gameStarted;
+    private Integer numPrevPlayer;
     private Controller(){}
     public static Controller getInstance(){
         if(controller == null){
@@ -19,34 +21,45 @@ public class Controller {
         return controller;
     }
     public void init(){
-        InputReader inputReader = new InputReader();
+        InputReader inputReader;
         ArrayList<Player> players;
         ArrayList<Location> locals;
-        players = readPlayers(inputReader);
-        locals = readLocations(inputReader);
-        readActions(inputReader, players, locals);
+        gameStarted = false;
+        try {
+            inputReader = new InputReader();
+            players = readPlayers(inputReader);
+            locals = readLocations(inputReader);
+            readActions(inputReader, players, locals);
+            inputReader.close();
+        } catch (ExecutionException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     private void readActions(InputReader inputReader, ArrayList<Player> players,
-                             ArrayList<Location> locals) {
+                             ArrayList<Location> locals) throws ExecutionException {
+        OutputWriter outputWriter = new OutputWriter();
         boolean exit = false;
         do{
             String str = inputReader.readLine();
-            String[] actions;
             if(str.equals("")) exit = true;
-            try {
-                checkAction(str, players, locals);
-            } catch (LogicException e) {
-                System.out.println(e.getMessage());
-
+            else{
+                try {
+                    checkAction(str, players, locals);
+                } catch (LogicException e) {
+                    String error = e.getMessage();
+                    System.out.println(error);
+                    outputWriter.writeLine(error);
+                }
             }
         }while(!exit);
+        outputWriter.close();
     }
 
     private void checkAction(String line, ArrayList<Player> players,
                              ArrayList<Location> locals) throws LogicException {
         String[] action = line.split(" ");
-        if((this.game == null) && !action[0].equalsIgnoreCase("I")) {
+        if(!gameStarted && !action[0].equalsIgnoreCase("I")) {
             throw new LogicException(line, LogicException.INCORRECT_ACTION);
         }
         switch (action[0]) {
@@ -78,7 +91,7 @@ public class Controller {
         printLocals(locals);
     }
     private void printLocals(ArrayList<Location> locals) {
-        locals.forEach(loc -> System.out.println(loc.toString()));
+        locals.forEach(loc -> System.out.println("\t" + loc.toString()));
     }
 
     //ACTION R
@@ -89,17 +102,23 @@ public class Controller {
         }
         int numPlayer = Integer.parseInt(action[1]);
         locals.forEach(loc -> {
-            if(loc.getNumPlayer() == numPlayer) loc.setPlayer(null);
+            if(loc.getPlayer() != null && loc.getPlayer().getNum() == numPlayer) loc.setPlayer(null);
         });
     }
     //ACTION M
     private void actionM(String line, String[] action, ArrayList<Player> players,
                          ArrayList<Location> locals) throws LogicException {
+        int numPlayer = Integer.parseInt(action[1]);
+        int posLocal = Integer.parseInt(action[2]);
         if(action.length != 3) {
             throw new LogicException(line, LogicException.INCORRECT_PAREAMETERS);
         }
-        int numPlayer = Integer.parseInt(action[1]);
-        int posLocal = Integer.parseInt(action[2]);
+        if(numPrevPlayer != null && numPrevPlayer == numPlayer) {
+            throw new LogicException(line, LogicException.PLAYER_DONT_REPEAT);
+        }
+        if(locals.stream().filter(loc -> loc.getPlayer() != null && loc.getPlayer().getNum() == numPlayer).count() == 2){
+            throw new LogicException(line, LogicException.TWO_PLAYERS_USED);
+        }
         //GET PLAYER
         Player player = players.stream()
                 .filter(guy -> guy.getNum() == numPlayer)
@@ -110,15 +129,75 @@ public class Controller {
                 .filter(loc -> loc.getNum() == posLocal)
                 .findFirst()
                 .get();
+        exchangeItems(line, player, local);
+        local.setPlayer(player);
+        numPrevPlayer = numPlayer;
+        throw new LogicException(line, LogicException.COMPLETE_TURN);
     }
+
+    private void exchangeItems(String line, Player player, Location local)
+            throws LogicException {
+        costProduct(line, player, local.getResourceRequired(), local.getQuantityRequired());
+        rewardProduct(player, local.getResourceObtained(), local.getQuantityObtained());
+    }
+
+    private void rewardProduct(Player player, Character resourceObtained, int quantityObtained) {
+        switch(resourceObtained){
+            case 'M':
+                player.setQuantityWood(quantityObtained);
+                break;
+            case 'C':
+                player.setQuantityCarbon(quantityObtained);
+                break;
+            case 'T':
+                player.setQuantityWheat(quantityObtained);
+                break;
+            case 'P':
+                player.plusScore(quantityObtained);
+                break;
+            case 'X':
+                player.setCoins(quantityObtained);
+                break;
+        }
+    }
+
+    private void costProduct(String line, Player player, Character resourceRequired,
+                                  int quantityRequired) throws LogicException {
+        switch (resourceRequired){
+            case 'C':
+                if(quantityRequired > player.getQuantityCarbon()){
+                    throw new LogicException(line, LogicException.LACK_MATERIALS);
+                }
+                player.setQuantityCarbon(quantityRequired - player.getQuantityCarbon());
+                break;
+            case 'M':
+                if(quantityRequired > player.getQuantityWood()){
+                    throw new LogicException(line, LogicException.LACK_MATERIALS);
+                }
+                player.setQuantityWood(player.getQuantityWood() - quantityRequired);
+                break;
+            case 'T':
+                if(quantityRequired > player.getQuantityWheat()){
+                    throw new LogicException(line, LogicException.LACK_MATERIALS);
+                }
+                player.setQuantityWheat(player.getQuantityWheat() - quantityRequired);
+                break;
+            case 'X':
+                if(quantityRequired > player.getCoins()){
+                    throw new LogicException(line, LogicException.LACK_MATERIALS);
+                }
+                player.setCoins(player.getCoins() - quantityRequired);
+                break;
+        }
+    }
+
     //ACTION I
     private void actionI(String line, int actionLength, ArrayList<Player> players,
                          ArrayList<Location> locals) throws LogicException {
         if(actionLength != 1) {
             throw new LogicException(line, LogicException.INCORRECT_PAREAMETERS);
         }
-        this.game = new Game(players, locals);
-        this.game.initGame();
+        gameStarted = true;
     }
     //ACTION S
     private void actionS(String line, int actionLength, ArrayList<Player> players)
@@ -130,11 +209,11 @@ public class Controller {
     }
     // S CODE - PRINT
     private void printPlayers(ArrayList<Player> players) {
-        players.forEach(guy -> System.out.println(guy.toString()));
+        players.forEach(guy -> System.out.println("\t" + guy.toString()));
     }
 
 
-    private ArrayList<Location> readLocations(InputReader inputReader) {
+    private ArrayList<Location> readLocations(InputReader inputReader) throws ExecutionException {
         boolean exit = false;
         ArrayList<Location> locals = new ArrayList<>();
         do {
@@ -156,7 +235,7 @@ public class Controller {
         return locals;
     }
 
-    private ArrayList<Player> readPlayers(InputReader inputReader) {
+    private ArrayList<Player> readPlayers(InputReader inputReader) throws ExecutionException {
         boolean exit = false;
         ArrayList<Player> players = new ArrayList<>();
         do {
@@ -176,5 +255,4 @@ public class Controller {
         }while(!exit);
         return players;
     }
-
 }

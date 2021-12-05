@@ -28,15 +28,33 @@ public class Location {
                 ", jugador=" + namePlayer +
                 "]";
     }
-
+    //GETTERS
     public int getNum() {
         return num;
     }
 
+    public Player getPlayer() {
+        return player;
+    }
+
+    public Character getResourceRequired() {
+        return resourceRequired;
+    }
+
+    public int getQuantityRequired() {
+        return qRequired;
+    }
+
+    public Character getResourceObtained() {
+        return resourceObtained;
+    }
+
+    public int getQuantityObtained() {
+        return qObtained;
+    }
+
+    //SETTER
     public void setPlayer(Player player) {
         this.player = player;
-    }
-    public int getNumPlayer(){
-        return player.getNum();
     }
 }
