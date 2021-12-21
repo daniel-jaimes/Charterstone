@@ -24,13 +24,12 @@ public class Controller {
     }
     public void init(){
         InputReader inputReader;
-
         gameStarted = false;
-        OutputWriter outputWriter = null;
+        OutputWriter outputWriter;
         try {
             inputReader = new InputReader();
             outputWriter = new OutputWriter();
-            logically(inputReader, outputWriter);
+            startReading(inputReader, outputWriter);
             inputReader.close();
             outputWriter.close();
         } catch (ExecutionException e) {
@@ -38,7 +37,7 @@ public class Controller {
         }
     }
 
-    private void logically(InputReader inputReader, OutputWriter outputWriter) throws ExecutionException {
+    private void startReading(InputReader inputReader, OutputWriter outputWriter) throws ExecutionException {
         ArrayList<Player> players = new ArrayList<>();
         ArrayList<Location> locals = new ArrayList<>();
         boolean exit = false;
@@ -140,8 +139,20 @@ public class Controller {
         if(numPrevPlayer != null && numPrevPlayer == numPlayer) {
             throw new LogicException(line, LogicException.PLAYER_DONT_REPEAT);
         }
-        if(locals.stream().filter(loc -> loc.getPlayer() != null && loc.getPlayer().getNum() == numPlayer).count() == 2){
+        if(locals.stream().filter(loc -> loc.getPlayer() != null
+                && loc.getPlayer().getNum() == numPlayer).count() == 2){
             throw new LogicException(line, LogicException.TWO_PLAYERS_USED);
+        }
+        //PLAYER IS PRESENT
+        boolean isPresent = players.stream()
+                .anyMatch(guy -> guy.getNum() == numPlayer);
+        if (!isPresent) {
+            throw new LogicException(line, LogicException.INCORRECT_ACTION);
+        }
+        //LOCATION IS PRESENT
+        isPresent = locals.stream().anyMatch(loc -> loc.getNum() == posLocal);
+        if(!isPresent){
+            throw new LogicException(line, LogicException.INCORRECT_ACTION);
         }
         //GET PLAYER
         Player player = players.stream()
