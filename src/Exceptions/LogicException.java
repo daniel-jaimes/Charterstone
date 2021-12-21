@@ -13,8 +13,8 @@ public class LogicException extends Exception{
     private final String errorLine;
     private int value;
     private List<String> message = Arrays.asList(
-            "<< La acción requerida es incorreta >>",
-            "<< Numero de parámetros incorrecto >>",
+            "<< La accion requerida es incorreta >>",
+            "<< Numero de parametros incorrecto >>",
             "<< No se puede realizar la acción por falta de materiales >>",
             "<< El jugador no puede volver a jugar >>",
             "<< El jugador ya ha utilizado sus dos personajes >>",

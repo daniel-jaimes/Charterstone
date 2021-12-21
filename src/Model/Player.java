@@ -53,6 +53,9 @@ public class Player {
     public int getCoins() {
         return coins;
     }
+    public int getScore(){
+        return score;
+    }
     //SETTERS
     public void setQuantityCarbon(int qCarbon) {
         this.qCarbon = qCarbon;
@@ -70,7 +73,8 @@ public class Player {
         this.coins = coins;
     }
 
-    public void plusScore(int score) {
-        this.score += score;
+    public void setScore(int score) {
+        this.score = score;
     }
+
 }

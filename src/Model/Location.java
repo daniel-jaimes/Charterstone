@@ -1,18 +1,17 @@
 package Model;
 
+import java.util.ArrayList;
+
 public class Location {
     private int num;
-    private Character resourceRequired;
-    private int qRequired;
-    private Character resourceObtained;
-    private int qObtained;
+    private ArrayList<Combo> itemsRequired;
+    private ArrayList<Combo> itemsObtained;
     private Player player;
-    public Location(int num, char resourceRequired, int qRequired, char resourceObtained, int qObtained) {
+
+    public Location(int num, ArrayList<Combo> itemsRequired, ArrayList<Combo> itemsObtained) {
         this.num = num;
-        this.resourceRequired = resourceRequired;
-        this.qRequired = qRequired;
-        this.resourceObtained = resourceObtained;
-        this.qObtained = qObtained;
+        this.itemsRequired = itemsRequired;
+        this.itemsObtained = itemsObtained;
     }
 
     @Override
@@ -20,13 +19,19 @@ public class Location {
         String namePlayer;
         if(player == null) namePlayer = "ninguno";
         else namePlayer = player.getColor();
-        return "Localizacion [" +
-                "necesario=" + resourceRequired +
-                ", numNecesario=" + qRequired +
-                ", Obtenido=" + resourceObtained +
-                ", numObtenido=" + qObtained +
-                ", jugador=" + namePlayer +
-                "]";
+        String result = "Localizacion [";
+        for (int i = 0; i < itemsRequired.size(); i++) {
+            result += "necesario"+ (1 + i) + "=" + itemsRequired.get(i).getResource() +
+                    ", numNecesario" + (1 + i) + "=" + itemsRequired.get(i).getQuantity() + ", ";
+        }
+        for (int i = 0; i < itemsObtained.size(); i++) {
+            result += "obtenido"+ (1 + i) + "=" + itemsObtained.get(i).getResource() +
+                    ", numNecesario" + (1 + i) + "=" + itemsObtained.get(i).getQuantity() + ", ";
+        }
+        //EXTRACT the last character (',')
+        result = result.substring(0, result.length() - 3);
+        result += ", jugador=" + namePlayer + "]";
+        return result;
     }
     //GETTERS
     public int getNum() {
@@ -36,23 +41,13 @@ public class Location {
     public Player getPlayer() {
         return player;
     }
-
-    public Character getResourceRequired() {
-        return resourceRequired;
+    public ArrayList<Combo> getItemsRequired() {
+        return itemsRequired;
     }
 
-    public int getQuantityRequired() {
-        return qRequired;
+    public ArrayList<Combo> getItemsObtained() {
+        return itemsObtained;
     }
-
-    public Character getResourceObtained() {
-        return resourceObtained;
-    }
-
-    public int getQuantityObtained() {
-        return qObtained;
-    }
-
     //SETTER
     public void setPlayer(Player player) {
         this.player = player;

@@ -1,4 +1,4 @@
-ERROR: S --> << La acción requerida es incorreta >>
+ERROR: S --> << La accion requerida es incorreta >>
 ERROR: M 1 2 --> << Turno completado >>
 ERROR: M 1 6 --> << El jugador no puede volver a jugar >>
 ERROR: M 2 1 --> << Turno completado >>

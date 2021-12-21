@@ -4,10 +4,12 @@ import Dao.InputReader;
 import Dao.OutputWriter;
 import Exceptions.ExecutionException;
 import Exceptions.LogicException;
+import Model.Combo;
 import Model.Location;
 import Model.Player;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Controller {
     private static Controller controller;
@@ -22,42 +24,62 @@ public class Controller {
     }
     public void init(){
         InputReader inputReader;
-        ArrayList<Player> players;
-        ArrayList<Location> locals;
+
         gameStarted = false;
+        OutputWriter outputWriter = null;
         try {
             inputReader = new InputReader();
-            players = readPlayers(inputReader);
-            locals = readLocations(inputReader);
-            readActions(inputReader, players, locals);
+            outputWriter = new OutputWriter();
+            logically(inputReader, outputWriter);
             inputReader.close();
+            outputWriter.close();
         } catch (ExecutionException e) {
             System.out.println(e.getMessage());
         }
     }
 
+    private void logically(InputReader inputReader, OutputWriter outputWriter) throws ExecutionException {
+        ArrayList<Player> players = new ArrayList<>();
+        ArrayList<Location> locals = new ArrayList<>();
+        boolean exit = false;
+        int select = 0; // 0 - players; 1 - locals; 2 - Actions
+        do {
+            try {
+                switch (select){
+                    case 0:
+                        players = readPlayers(inputReader);
+                        select++;
+                        break;
+                    case 1:
+                        locals = readLocations(inputReader);
+                        select++;
+                        break;
+                    case 2:
+                        readActions(inputReader, players, locals);
+                        exit = true;
+                        break;
+                }
+            } catch (LogicException e) {
+                String error = e.getMessage();
+                System.out.println(error);
+                outputWriter.writeLine(error);
+            }
+        } while(!exit);
+
+    }
+
     private void readActions(InputReader inputReader, ArrayList<Player> players,
-                             ArrayList<Location> locals) throws ExecutionException {
-        OutputWriter outputWriter = new OutputWriter();
+                             ArrayList<Location> locals) throws ExecutionException, LogicException {
         boolean exit = false;
         do{
             String str = inputReader.readLine();
             if(str.equals("")) exit = true;
-            else{
-                try {
-                    checkAction(str, players, locals);
-                } catch (LogicException e) {
-                    String error = e.getMessage();
-                    System.out.println(error);
-                    outputWriter.writeLine(error);
-                }
-            }
+            else checkActions(str, players, locals);
         }while(!exit);
-        outputWriter.close();
     }
 
-    private void checkAction(String line, ArrayList<Player> players,
-                             ArrayList<Location> locals) throws LogicException {
+    private void checkActions(String line, ArrayList<Player> players,
+                              ArrayList<Location> locals) throws LogicException {
         String[] action = line.split(" ");
         if(!gameStarted && !action[0].equalsIgnoreCase("I")) {
             throw new LogicException(line, LogicException.INCORRECT_ACTION);
@@ -67,13 +89,13 @@ public class Controller {
                 actionS(line, action.length, players);
                 break;
             case "I":
-                actionI(line, action.length, players, locals);
+                actionI(line, action.length);
                 break;
             case "M":
                 actionM(line, action, players, locals);
                 break;
             case "R":
-                actionR(line, action, players, locals);
+                actionR(line, action, locals);
                 break;
             case "L":
                 actionL(line, action.length, locals);
@@ -95,7 +117,7 @@ public class Controller {
     }
 
     //ACTION R
-    private void actionR(String line, String[] action, ArrayList<Player> players,
+    private void actionR(String line, String[] action,
                          ArrayList<Location> locals) throws LogicException {
         if(action.length != 2) {
             throw new LogicException(line, LogicException.INCORRECT_PAREAMETERS);
@@ -104,6 +126,8 @@ public class Controller {
         locals.forEach(loc -> {
             if(loc.getPlayer() != null && loc.getPlayer().getNum() == numPlayer) loc.setPlayer(null);
         });
+
+
     }
     //ACTION M
     private void actionM(String line, String[] action, ArrayList<Player> players,
@@ -137,66 +161,106 @@ public class Controller {
 
     private void exchangeItems(String line, Player player, Location local)
             throws LogicException {
-        costProduct(line, player, local.getResourceRequired(), local.getQuantityRequired());
-        rewardProduct(player, local.getResourceObtained(), local.getQuantityObtained());
+        verifyItemsPlayer(line, player, local.getItemsRequired());
+        costProduct(player, local.getItemsRequired());
+        rewardProduct(player, local.getItemsObtained());
     }
 
-    private void rewardProduct(Player player, Character resourceObtained, int quantityObtained) {
-        switch(resourceObtained){
-            case 'M':
-                player.setQuantityWood(quantityObtained);
-                break;
-            case 'C':
-                player.setQuantityCarbon(quantityObtained);
-                break;
-            case 'T':
-                player.setQuantityWheat(quantityObtained);
-                break;
-            case 'P':
-                player.plusScore(quantityObtained);
-                break;
-            case 'X':
-                player.setCoins(quantityObtained);
-                break;
-        }
+    private void rewardProduct(Player player, ArrayList<Combo> itemsObtained) {
+        itemsObtained.forEach(item -> {
+            switch(item.getResource()){
+                //MADERA
+                case 'M':
+                    player.setQuantityWood(item.getQuantity());
+                    break;
+                //CARBON
+                case 'C':
+                    player.setQuantityCarbon(item.getQuantity());
+                    break;
+                //TRIGO
+                case 'T':
+                    player.setQuantityWheat(item.getQuantity());
+                    break;
+                //PUNTOS
+                case 'P':
+                    player.setScore(item.getQuantity());
+                    break;
+                //MONEDAS
+                case 'X':
+                    player.setCoins(item.getQuantity());
+                    break;
+            }
+        });
     }
 
-    private void costProduct(String line, Player player, Character resourceRequired,
-                                  int quantityRequired) throws LogicException {
-        switch (resourceRequired){
-            case 'C':
-                if(quantityRequired > player.getQuantityCarbon()){
-                    throw new LogicException(line, LogicException.LACK_MATERIALS);
-                }
-                player.setQuantityCarbon(quantityRequired - player.getQuantityCarbon());
-                break;
-            case 'M':
-                if(quantityRequired > player.getQuantityWood()){
-                    throw new LogicException(line, LogicException.LACK_MATERIALS);
-                }
-                player.setQuantityWood(player.getQuantityWood() - quantityRequired);
-                break;
-            case 'T':
-                if(quantityRequired > player.getQuantityWheat()){
-                    throw new LogicException(line, LogicException.LACK_MATERIALS);
-                }
-                player.setQuantityWheat(player.getQuantityWheat() - quantityRequired);
-                break;
-            case 'X':
-                if(quantityRequired > player.getCoins()){
-                    throw new LogicException(line, LogicException.LACK_MATERIALS);
-                }
-                player.setCoins(player.getCoins() - quantityRequired);
-                break;
+    private void costProduct(Player player, ArrayList<Combo> itemsRequired) {
+
+        itemsRequired.forEach(item -> {
+            int quantity = item.getQuantity();
+            switch (item.getResource()){
+                case 'C':
+                    player.setQuantityCarbon(player.getQuantityCarbon() - quantity);
+                    break;
+                case 'M':
+
+                    player.setQuantityWood(player.getQuantityWood() - quantity);
+                    break;
+                case 'T':
+                    player.setQuantityWheat(player.getQuantityWheat() - quantity);
+                    break;
+                case 'X':
+                    player.setCoins(player.getCoins() - quantity);
+                    break;
+                case 'P':
+                    player.setScore(player.getScore() - quantity);
+            }
+        });
+
+    }
+
+    private void verifyItemsPlayer(String line, Player player, ArrayList<Combo> itemsRequired) throws LogicException{
+        for (Combo item : itemsRequired){
+            switch (item.getResource()){
+                //CARBON
+                case 'C':
+                    if(item.getQuantity() > player.getQuantityCarbon()){
+                        throw new LogicException(line, LogicException.LACK_MATERIALS);
+                    }
+                    break;
+                //MONEDAS
+                case 'M':
+                    if(item.getQuantity() > player.getQuantityWood()){
+                        throw new LogicException(line, LogicException.LACK_MATERIALS);
+                    }
+                    break;
+                //TRIGO
+                case 'T':
+                    if(item.getQuantity() > player.getQuantityWheat()){
+                        throw new LogicException(line, LogicException.LACK_MATERIALS);
+                    }
+                    break;
+                //MONEDAS
+                case 'X':
+                    if(item.getQuantity() > player.getCoins()){
+                        throw new LogicException(line, LogicException.LACK_MATERIALS);
+                    }
+                    break;
+                //PUNTOS
+                case 'P':
+                    if(item.getQuantity() > player.getScore()){
+                        throw new LogicException(line, LogicException.LACK_MATERIALS);
+                    }
+                    break;
+            }
         }
     }
 
     //ACTION I
-    private void actionI(String line, int actionLength, ArrayList<Player> players,
-                         ArrayList<Location> locals) throws LogicException {
+    private void actionI(String line, int actionLength) throws LogicException {
         if(actionLength != 1) {
             throw new LogicException(line, LogicException.INCORRECT_PAREAMETERS);
         }
+        System.out.println("INICIANDO PARTIDA");
         gameStarted = true;
     }
     //ACTION S
@@ -213,23 +277,42 @@ public class Controller {
     }
 
 
-    private ArrayList<Location> readLocations(InputReader inputReader) throws ExecutionException {
+    private ArrayList<Location> readLocations(InputReader inputReader) throws ExecutionException, LogicException {
         boolean exit = false;
         ArrayList<Location> locals = new ArrayList<>();
+        String line;
+        String[] localization;
+
         do {
-            String str = inputReader.readLine();
-            String[] localization;
+            ArrayList<Combo> itemsRequired = new ArrayList<>();
+            ArrayList<Combo> itemsObtained = new ArrayList<>();
+            line = inputReader.readLine();
             //SE ACABA
-            if(str.equals("##")) exit = true;
+            if(line.equals("##")) exit = true;
             // ES UNA LOCALIZACION
-            if (Character.toLowerCase(str.charAt(0)) == Character.toLowerCase('L')
-                    && (localization = str.substring(1).split(" ")).length == 6) {
-                int num = Integer.parseInt(localization[0]);
-                char resourceRequired = localization[1].charAt(0);
-                int qRequired = Integer.parseInt(localization[2]);
-                char resourceObtained = localization[4].charAt(0);
-                int qObtained = Integer.parseInt(localization[5]);
-                locals.add(new Location(num, resourceRequired, qRequired, resourceObtained, qObtained));
+            if (Character.toLowerCase(line.charAt(0)) == Character.toLowerCase('L')
+                    && Arrays.asList(localization = line.substring(1).split(" ")).contains("=")) {
+
+                boolean change = false;
+                if((localization.length - 1) % 2 == 0){
+                    throw new LogicException(line, LogicException.INCORRECT_PAREAMETERS);
+                }
+
+                for (int i = 1; i < localization.length && !change; i += 2) {
+                    if(localization[i].charAt(0) != '=' && localization[i + 1].charAt(0) != '=') {
+                        String resource = localization[i];
+                        int quantity = Integer.parseInt(localization[i + 1]);
+                        itemsRequired.add(new Combo(resource.charAt(0), quantity));
+                    } else change = true;
+                }
+                for (int i = Arrays.asList(localization).indexOf("=") + 1; i < localization.length; i += 2) {
+                    String resource = localization[i];
+                    int quantity = Integer.parseInt(localization[i + 1]);
+                    itemsObtained.add(new Combo(resource.charAt(0), quantity));
+                }
+
+                int localID = Integer.parseInt(localization[0]);
+                locals.add(new Location(localID, itemsRequired, itemsObtained));
             }
         }while(!exit);
         return locals;
